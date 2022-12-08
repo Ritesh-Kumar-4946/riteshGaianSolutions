@@ -1,4 +1,4 @@
-package com.ritesh.gaiansolutions
+package com.ritesh.gaiansolutions.ui
 
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
