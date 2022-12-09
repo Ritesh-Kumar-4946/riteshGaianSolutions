@@ -1,3 +1,7 @@
 <resources>
     <dimen name="fab_margin">16dp</dimen>
+    <dimen name="video_frame_width">2dp</dimen>
+    <dimen name="scrubber_dragged_size">24dp</dimen>
+    <dimen name="scrubber_enabled_size">16dp</dimen>
+    <dimen name="scrubber_disabled_size">12dp</dimen>
 </resources>
