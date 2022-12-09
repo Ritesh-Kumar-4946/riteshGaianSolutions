@@ -4,6 +4,8 @@ import android.Manifest
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Intent
+import android.hardware.Sensor
+import android.hardware.SensorManager
 import android.location.Location
 import android.os.Bundle
 import android.util.Log
@@ -41,6 +43,8 @@ import com.ritesh.gaiansolutions.utils.Constants.STATE_PLAYER_PLAYING
 import com.ritesh.gaiansolutions.utils.Constants.STATE_RESUME_POSITION
 import com.ritesh.gaiansolutions.utils.Constants.STATE_RESUME_WINDOW
 import com.ritesh.gaiansolutions.utils.LocationUtil
+import com.ritesh.gaiansolutions.utils.ShakeDetector
+import com.ritesh.gaiansolutions.utils.ShakeDetector.OnShakeListener
 import com.ritesh.gaiansolutions.viewmodel.LocationViewModel
 
 class MainActivity : AppCompatActivity() {
@@ -50,6 +54,7 @@ class MainActivity : AppCompatActivity() {
     private var isGPSEnabled = false
     private var initLat: Double = 0.0
     private var initLong: Double = 0.0
+    private var theBoolean : Boolean = true
 
     private val locationPermissions = arrayOf(
         Manifest.permission.ACCESS_FINE_LOCATION,
@@ -72,6 +77,11 @@ class MainActivity : AppCompatActivity() {
         .setUri(SAMPLE_MP4_URL)
         .setMimeType(MimeTypes.APPLICATION_MP4)
         .build()
+
+
+    private var mSensorManager: SensorManager? = null
+    private var mAccelerometer: Sensor? = null
+    private var mShakeDetector: ShakeDetector? = null
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -110,8 +120,27 @@ class MainActivity : AppCompatActivity() {
             isPlayerPlaying = savedInstanceState.getBoolean(STATE_PLAYER_PLAYING)
         }
 
+        initSensors()
 
     }
+
+
+    private fun initSensors(){
+        // TODO: ShakeDetector initialization
+        mSensorManager = getSystemService(SENSOR_SERVICE) as SensorManager
+        mAccelerometer = mSensorManager!!.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)
+        mShakeDetector = ShakeDetector()
+        mShakeDetector!!.setOnShakeListener(OnShakeListener { count ->
+//            theBoolean = !theBoolean;
+            theBoolean = theBoolean xor true
+            Log.e("Shake", "onShake= $count, theBoolean= $theBoolean")
+//            exoPlayer.playWhenReady = theBoolean // play pause video
+            exoPlayer.seekTo(0)
+            exoPlayer.playWhenReady = true
+
+        })
+    }
+
 
 
     private fun initPlayer() {
@@ -212,6 +241,13 @@ class MainActivity : AppCompatActivity() {
     // TODO: onResume lifecycle of activity
     override fun onResume() {
         super.onResume()
+        // TODO: Add the following line to register the Session Manager Listener onResume
+        mSensorManager!!.registerListener(
+            mShakeDetector,
+            mAccelerometer,
+            SensorManager.SENSOR_DELAY_UI
+        )
+
         if (Util.SDK_INT <= 23) {
             initPlayer()
             playerView.onResume()
@@ -221,6 +257,8 @@ class MainActivity : AppCompatActivity() {
 
     // TODO: onPause lifecycle of activity
     override fun onPause() {
+        // TODO: Add the following line to unregister the Sensor Manager onPause
+        mSensorManager!!.unregisterListener(mShakeDetector)
         super.onPause()
         if (Util.SDK_INT <= 23) {
             playerView.onPause()
@@ -251,20 +289,12 @@ class MainActivity : AppCompatActivity() {
     }
 
 
-    /*companion object {
-        const val STATE_RESUME_WINDOW = "resumeWindow"
-        const val STATE_RESUME_POSITION = "resumePosition"
-        const val STATE_PLAYER_FULLSCREEN = "playerFullscreen"
-        const val STATE_PLAYER_PLAYING = "playerOnPlay"
-    }*/
-
-
     // TODO: Observe LocationViewModel LiveData to get updated location
     @SuppressLint("SetTextI18n")
     private fun observeLocationUpdates() {
         locationViewModel.getLocationData.observe(this, Observer {
-            binding.longitude.text = "Longitude: ${it.longitude.toString()}"
-            binding.latitude.text = "Latitude: ${it.latitude.toString()}"
+            binding.longitude.text = "CurrentLong: ${it.longitude}"
+            binding.latitude.text = "CurrentLat: ${it.latitude}"
             binding.info.text = getString(R.string.location_successfully_received)
             if (initLat == 0.0 && initLong == 0.0) {
                 Log.e(
@@ -298,13 +328,15 @@ class MainActivity : AppCompatActivity() {
             Log.e("endPoint", "Lat= " + it.latitude + ", Long= " + it.latitude)
             val distance = startPoint.distanceTo(endPoint).toDouble()
             Log.e("distance", "distance= $distance")
-            binding.tvDistance.text = "Distance= ${distance.toString()}"
+            binding.tvDistance.text = "Distance= $distance"
 //            Toast.makeText(this, "Location_distance:$distance", Toast.LENGTH_SHORT).show()
 
             if (distance >= 10) {
                 initLat = 0.0
                 initLong = 0.0
                 binding.tvInitvalues.text = "initLat= $initLat , initLong= $initLong"
+                exoPlayer.seekTo(0)
+                exoPlayer.playWhenReady = true
                 Toast.makeText(this, "ResetLatLong :$distance", Toast.LENGTH_SHORT).show()
             }
 

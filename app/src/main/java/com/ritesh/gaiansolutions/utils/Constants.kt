@@ -13,8 +13,8 @@ object Constants {
     const val STATE_PLAYER_FULLSCREEN = "playerFullscreen"
     const val STATE_PLAYER_PLAYING = "playerOnPlay"
 
-    const val INTERVAL = 3000L
-    const val FASTEST_INTERVAL = 3000L
+    const val INTERVAL = 1500L
+    const val FASTEST_INTERVAL = 1500L
     const val LOCATION_PERMISSION_REQUEST = 101
     const val SAMPLE_MP4_URL =
         "https://www.sample-videos.com/video123/mp4/720/big_buck_bunny_720p_20mb.mp4"
